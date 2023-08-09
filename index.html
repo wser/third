@@ -2,23 +2,18 @@
   <link rel="stylesheet" href="./style.css">
 
   <script src="//unpkg.com/element-resize-detector/dist/element-resize-detector.min.js"></script>
-  
+  <script src="//unpkg.com/d3-octree"></script>
+  <script src="//unpkg.com/d3-force-3d"></script>  
   <!-- <script src="//unpkg.com/force-graph"></script> -->
   <!-- <script src="//unpkg.com/3d-force-graph"></script> -->
-  <script src="./three.js_0.155.0_three.min.js"></script>
 
-  <script src="./unpkg.com_force-graph@1.43.2_dist_force-graph.min.js"></script>
-  <script src="./unpkg.com_3d-force-graph@1.72.1_dist_3d-force-graph.min.js"></script>
-
-  <script src="//unpkg.com/d3-octree"></script>
-  <script src="//unpkg.com/d3-force-3d"></script>
-
+  <script src="./vendors/three.js_0.155.0_three.min.js"></script>
+  <script src="./vendors/unpkg.com_force-graph@1.43.2_dist_force-graph.min.js"></script>
+  <script src="./vendors/unpkg.com_3d-force-graph@1.72.1_dist_3d-force-graph.min.js"></script>
 </head>
 
 <body>
-  <!-- Rounded switch -->  
   <input class="toggle" type="checkbox" />
   <div id="3d-graph"></div>
-
-  <script type="module" src="script.js"></script>
+  <script type="module" src="./script.js" defer></script>
 </body>
