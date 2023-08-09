@@ -2,26 +2,10 @@ const $ = e => document.querySelector(e)
 const elem = document.getElementById("3d-graph");
 const rootId = 0;
 
-
-document.addEventListener('DOMContentLoaded', function () {
-  
-  let checkbox = document.querySelector('input[type="checkbox"]');
-
-  checkbox.addEventListener('change', function () {
-    if (checkbox.checked) {
-      // do this
-      render3D()
-      console.log('Checked');
-    } else {
-      // do that
-      render3D()
-      console.log('Not checked');
-    }
-  });
-
-  render2D()
-});
-
+document.addEventListener('DOMContentLoaded', () => {  
+  const checkbox = $('input[type="checkbox"]');
+  checkbox.addEventListener('change', () => checkbox.checked ? render2D() : render3D());
+})
 
 
 
