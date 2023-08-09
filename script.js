@@ -19,6 +19,7 @@ const gData = {
     })),
 };
 
+// Custom data
 // const gData = {
 //   nodes: [
 //     { id: 0, collapsed: false, group: 1, childLinks: [] },
@@ -37,65 +38,47 @@ const gData = {
 
 //   ]
 // };
+()=>{}
 
 // link parent/children
-const nodesById = Object.fromEntries(
-  gData.nodes.map((node) => [node.id, node])
-);
-gData.links.forEach((link) => {
-  nodesById[link.source].childLinks.push(link);
+  const nodesById = Object.fromEntries(gData.nodes.map((node) => [node.id, node]) );
 
-  const a = gData.nodes[link.source];
-  const b = gData.nodes[link.target];
-  !a.neighbors && (a.neighbors = []);
-  !b.neighbors && (b.neighbors = []);
-  a.neighbors.push(b);
-  b.neighbors.push(a);
+  gData.links.forEach((link) => {
+    nodesById[link.source].childLinks.push(link);
 
-  !a.links && (a.links = []);
-  !b.links && (b.links = []);
-  a.links.push(link);
-  b.links.push(link);
-});
+    const a = gData.nodes[link.source];
+    const b = gData.nodes[link.target];
+    !a.neighbors && (a.neighbors = []);
+    !b.neighbors && (b.neighbors = []);
+    a.neighbors.push(b);
+    b.neighbors.push(a);
 
-const getPrunedTree = () => {
-  const visibleNodes = [];
-  const visibleLinks = [];
+    !a.links && (a.links = []);
+    !b.links && (b.links = []);
+    a.links.push(link);
+    b.links.push(link);
+  });
 
-  (function traverseTree(node = nodesById[rootId]) {
-    visibleNodes.push(node);
-    if (node.collapsed) return;
-    visibleLinks.push(...node.childLinks);
-    node.childLinks
-      .map((link) =>
-        typeof link.target === "object" ? link.target : nodesById[link.target]
-      ) // get child node
-      .forEach(traverseTree);
-  })(); // IIFE
 
-  return { nodes: visibleNodes, links: visibleLinks };
-};
 
 const highlightNodes = new Set();
 const highlightLinks = new Set();
 let hoverNode = null;
 
 const elem = document.getElementById("3d-graph");
+// define main object and data
 const Graph = ForceGraph3D()(elem)
+  //.height(window.innerHeight - 60)
+  .graphData(getPrunedTree()) // data to work with
+  //.cooldownTicks(200) // cool down time to fit to canvas size
 
 Graph // nodes  
   //.nodeColor(node => highlightNodes.has(node) ? node === hoverNode ? 'rgb(255,0,0,1)' : 'rgba(255,160,0,0.8)' : 'rgba(0,255,255,0.6)')
   .nodeAutoColorBy("group")
-  .nodeColor((node) =>
-    !node.childLinks.length ? "green" : node.collapsed ? "red" : "yellow"
-  )
+  .nodeColor((node) => !node.childLinks.length ? "green" : node.collapsed ? "red" : "yellow")
   .nodeLabel("id")
-
-Graph //links
-  .height(window.innerHeight - 60)
-  .graphData(getPrunedTree()) // data to work with
-  //.cooldownTicks(200) // cool down time to fit to canvas size
   
+Graph //links
   .linkCurvature(0.25) // bezier curve
   .linkCurveRotation(0) // curve toration in radians
   .linkWidth((link) => (highlightLinks.has(link) ? 1 : 1))
@@ -104,7 +87,7 @@ Graph //links
   .linkOpacity(0.12)
   //.linkAutoColorBy(d => gData.nodes[d.source].group)
 
-  Graph // actions  
+Graph // actions  
   .onLinkHover((link) => {
     highlightNodes.clear();
     highlightLinks.clear();
@@ -121,11 +104,28 @@ Graph //links
     // no state change
     // if ((!node && !highlightNodes.size) || (node && hoverNode === node)) return;
 
+    // gData.links.forEach((link) => {
+    //   nodesById[link.source].childLinks.push(link);
+  
+    //   const a = gData.nodes[link.source];
+    //   const b = gData.nodes[link.target];
+    //   !a.neighbors && (a.neighbors = []);
+    //   !b.neighbors && (b.neighbors = []);
+    //   a.neighbors.push(b);
+    //   b.neighbors.push(a);
+  
+    //   !a.links && (a.links = []);
+    //   !b.links && (b.links = []);
+    //   a.links.push(link);
+    //   b.links.push(link);
+    // });
+
     elem.style.cursor = node && node.childLinks.length ? "pointer" : null; // show cursor pointer on node
 
     highlightNodes.clear();
     highlightLinks.clear();
-    if (node) {
+    
+    if (node) { //highlight links and nodes
       highlightNodes.add(node);
       node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor));
       node.links.forEach((link) => highlightLinks.add(link));
@@ -134,7 +134,6 @@ Graph //links
     hoverNode = node || null;
     updateHighlight();
   })
-
   // .onNodeDragEnd(node => { // fix node position
   //   node.fx = node.x;
   //   node.fy = node.y;
@@ -147,9 +146,8 @@ Graph //links
       Graph.graphData(getPrunedTree()); // reload data
     }
 
-    if (node.link) {
-      if (confirm(`Go to: ${node.link}`)) window.location.href = node.link;
-    }
+    // folow the link
+    if (node.link) { if (confirm(`Go to: ${node.link}`)) window.location.href = node.link; }
 
     // if (confirm(`remove node`)) removeNode(node)
 
@@ -172,15 +170,14 @@ Graph //links
   });
 
 // Listen for click events on the canvas
-// onBackgroundRightClick(() => {
-//   // Add a new node to the graph on click
-//   const { nodes, links } = Graph.graphData();
-//   const id = nodes.length ;
-//   Graph.graphData({
-//     nodes: [...nodes, { id, collapsed: false, group: 1, childLinks: [] }],
-//     links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
-//   });
-// }).
+Graph
+  .onBackgroundRightClick(() => {
+    // Add a new node to the graph on click
+    const { nodes, links } = gData // Graph.graphData(); - only visible data
+    let id = nodes.length;
+    addNode(id, nodes, links)
+    console.log (id)
+  });
 
 // const { nodes, links } = Graph.graphData();
 // const id = nodes.length;
@@ -191,12 +188,42 @@ Graph //links
 
 // fit to canvas when engine stops
 //Graph.onEngineStop(() => Graph.zoomToFit(400));
+() => {}
+
+// Functions
+function getPrunedTree (){
+  // collapsed nodes traversing
+  const visibleNodes = [];
+  const visibleLinks = [];
+
+  (function traverseTree(node = nodesById[rootId]) {
+    visibleNodes.push(node);
+    if (node.collapsed) return;
+    visibleLinks.push(...node.childLinks);
+    node.childLinks
+      .map((link) =>
+        typeof link.target === "object" ? link.target : nodesById[link.target]
+      ) // get child node
+      .forEach(traverseTree);
+  })(); // IIFE
+
+  return { nodes: visibleNodes, links: visibleLinks };
+};
 
 function updateHighlight() {
   // trigger update of highlighted objects in scene
   Graph.nodeColor(Graph.nodeColor())
     .linkWidth(Graph.linkWidth())
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
+}
+
+function addNode(id, nodes, links, collapsed=false, group=1){
+  Object.bind(gData, {
+    nodes: [...nodes, { id, collapsed, group, childLinks: [] }],
+   // links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
+  });
+
+  Graph.graphData(gData)
 }
 
 function removeNode(node) {
@@ -218,18 +245,15 @@ function removeNode(node) {
 //     });
 //     angle += 0.01047197551196597746154214461093 //Math.PI / 300;
 //   }, 50);
+() => {}
 
+// add plane under the graph
 const planeGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
-const planeMaterial = new THREE.MeshLambertMaterial({
-  color: 0x030781,
-  side: THREE.DoubleSide,
-});
+const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x030781, side: THREE.DoubleSide,});
 const mesh = new THREE.Mesh(planeGeometry, planeMaterial);
 mesh.position.set(-100, -200, -100);
 mesh.rotation.set(0.5 * Math.PI, 0, 0);
 
 Graph.scene().add(mesh);
 
-elementResizeDetectorMaker().listenTo(elem, (el) =>
-  Graph.width(el.offsetWidth)
-);
+elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
