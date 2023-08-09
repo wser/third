@@ -55,7 +55,10 @@ function render2D(){
         node.collapsed = !node.collapsed; // toggle collapse state
         Graph.graphData(getPrunedTree());
       }
+
+      if (confirm(`remove node`)) removeNode(node.id)
     })
+
     // .linkDirectionalParticles(1)
     // .linkDirectionalParticleWidth(2.5)
     .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow');
@@ -107,16 +110,15 @@ function render2D(){
     Graph.graphData({ nodes, links }) 
   
   }
-  
+
   function removeNode(node) {
     let { nodes, links } = Graph.graphData();
-    links = links.filter((l) => l.source !== node && l.target !== node); // Remove links attached to node
-    if (node.id != 0) nodes.splice(node.id, 1); // Remove node
-    nodes.forEach((n, idx) => {
-      n.id = idx;
-    }); // Reset node ids to array index
+    links = links.filter(l => l.source !== node && l.target !== node); // Remove links attached to node
+    if (node.id != 0)nodes.splice(node.id, 1); // Remove node
+    nodes.forEach((n, idx) => { n.id = idx; }); // Reset node ids to array index
     Graph.graphData({ nodes, links });
   }
+
 }
 
 
