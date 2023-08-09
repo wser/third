@@ -1,21 +1,34 @@
+const $ = e => document.querySelector(e)
+const elem = document.getElementById("3d-graph");
+const rootId = 0;
+
+
 document.addEventListener('DOMContentLoaded', function () {
-  var checkbox = document.querySelector('input[type="checkbox"]');
+  
+  let checkbox = document.querySelector('input[type="checkbox"]');
 
   checkbox.addEventListener('change', function () {
     if (checkbox.checked) {
       // do this
-      //console.log('Checked');
+      render3D()
+      console.log('Checked');
     } else {
       // do that
-      //console.log('Not checked');
+      render3D()
+      console.log('Not checked');
     }
   });
+
+  render2D()
 });
 
-const rootId = 0;
-const N = 5;
-const GROUPS = 12;
-const distance = 150;
+
+
+
+function render3D(){  
+  const N = 5;
+  const GROUPS = 12;
+  const distance = 150;
 
 // Random tree
 // const gData = {
@@ -54,32 +67,29 @@ const gData = {
 };
 
 // get nodes ID
-  const nodesById = Object.fromEntries(gData.nodes.map((node) => [node.id, node]) );
+const nodesById = Object.fromEntries(gData.nodes.map((node) => [node.id, node]) );
 
 // link parent/children
-  gData.links.forEach((link) => {
-    nodesById[link.source].childLinks.push(link);
+gData.links.forEach((link) => {
+  nodesById[link.source].childLinks.push(link);
 
-    const a = gData.nodes[link.source];
-    const b = gData.nodes[link.target];
-    !a.neighbors && (a.neighbors = []);
-    !b.neighbors && (b.neighbors = []);
-    a.neighbors.push(b);
-    b.neighbors.push(a);
+  const a = gData.nodes[link.source];
+  const b = gData.nodes[link.target];
+  !a.neighbors && (a.neighbors = []);
+  !b.neighbors && (b.neighbors = []);
+  a.neighbors.push(b);
+  b.neighbors.push(a);
 
-    !a.links && (a.links = []);
-    !b.links && (b.links = []);
-    a.links.push(link);
-    b.links.push(link);
-  });
-
-const highlightNodes = new Set();
-const highlightLinks = new Set();
-let hoverNode = null;
-
-const elem = document.getElementById("3d-graph");
+  !a.links && (a.links = []);
+  !b.links && (b.links = []);
+  a.links.push(link);
+  b.links.push(link);
+});
+  const highlightNodes = new Set();
+  const highlightLinks = new Set();
+  let hoverNode = null;
 // define main object and data
-const Graph = ForceGraph3D()(elem)
+let Graph = ForceGraph3D()(elem)
   //.height(window.innerHeight - 60)
   .graphData(getPrunedTree()) // data to work with
   //.cooldownTicks(200) // cool down time to fit to canvas size
@@ -273,3 +283,62 @@ mesh.rotation.set(0.5 * Math.PI, 0, 0);
 Graph.scene().add(mesh);
 
 elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
+}
+
+function render2D(){
+    // Random tree
+    const N = 300;
+    const gData = {
+      nodes: [...Array(N).keys()].map(i => ({ id: i, collapsed: i !== rootId, childLinks: [] })),
+      links: [...Array(N).keys()]
+        .filter(id => id)
+        .map(id => ({
+          source: Math.round(Math.random() * (id - 1)),
+          target: id
+        }))
+    };
+
+    // link parent/children
+    const nodesById = Object.fromEntries(gData.nodes.map(node => [node.id, node]));
+    gData.links.forEach(link => {
+      nodesById[link.source].childLinks.push(link);
+    });
+
+    const getPrunedTree = () => {
+      const visibleNodes = [];
+      const visibleLinks = [];
+
+      (function traverseTree(node = nodesById[rootId]) {
+        visibleNodes.push(node);
+        if (node.collapsed) return;
+        visibleLinks.push(...node.childLinks);
+        node.childLinks
+          .map(link => ((typeof link.target) === 'object') ? link.target : nodesById[link.target]) // get child node
+          .forEach(traverseTree);
+      })(); // IIFE
+
+      return { nodes: visibleNodes, links: visibleLinks };
+    };
+
+    const Graph = ForceGraph()(elem)
+      .graphData(getPrunedTree())
+      .onNodeHover(node => elem.style.cursor = node && node.childLinks.length ? 'pointer' : null)
+      .onNodeClick(node => {
+        if (node.childLinks.length) {
+          node.collapsed = !node.collapsed; // toggle collapse state
+          Graph.graphData(getPrunedTree());
+        }
+      })
+      .linkDirectionalParticles(1)
+      .linkDirectionalParticleWidth(2.5)
+      .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow');
+
+
+}
+
+
+
+
+
+
+
