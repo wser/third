@@ -4,62 +4,65 @@ const GROUPS = 12;
 const distance = 150;
 
 // Random tree
-const gData = {
-  nodes: [...Array(N).keys()].map((i) => ({
-    id: i,
-    collapsed: i !== rootId,
-    group: Math.ceil(Math.random() * GROUPS),
-    childLinks: [],
-  })),
-  links: [...Array(N).keys()]
-    .filter((id) => id)
-    .map((id) => ({
-      source: Math.round(Math.random() * (id - 1)),
-      target: id,
-    })),
-};
+// const gData = {
+//   nodes: [...Array(N).keys()].map((i) => ({
+//     id: i,
+//     collapsed: i !== rootId,
+//     group: Math.ceil(Math.random() * GROUPS),
+//     childLinks: [],
+//   })),
+//   links: [...Array(N).keys()]
+//     .filter((id) => id)
+//     .map((id) => ({
+//       source: Math.round(Math.random() * (id - 1)),
+//       target: id,
+//     })),
+// };
 
 // Custom data
-// const gData = {
-//   nodes: [
-//     { id: 0, collapsed: false, group: 1, childLinks: [] },
-//     { id: 1, collapsed: true, group: 1, childLinks: [] },
-//     { id: 2, collapsed: true, group: 2, link:"https://www.google.com/", childLinks: [] },
-//     { id: 3, collapsed: true, group: 2, childLinks: [] },
-//     { id: 4, collapsed: true, group: 2, childLinks: [] },
+const gData = {
+  nodes: [
+    { id: 0, collapsed: false, group: 1, childLinks: [] },
+    { id: 1, collapsed: true, group: 1, childLinks: [] },
+    { id: 2, collapsed: true, group: 2, link:"https://www.google.com/", childLinks: [] },
+    { id: 3, collapsed: true, group: 2, childLinks: [] },
+    { id: 4, collapsed: true, group: 2, childLinks: [] },
 
-//   ],
-//   links: [
-//     { source: 0, target: 1},
-//     { source: 1, target: 2},
-//     { source: 1, target: 3},
-//     { source: 3, target: 4},
-//     // { source: 2, target: 4},
+  ],
+  links: [
+    { source: 0, target: 1},
+    { source: 1, target: 2},
+    { source: 1, target: 3},
+    { source: 3, target: 4},
+    // { source: 2, target: 4},
 
-//   ]
-// };
+  ]
+};
 ()=>{}
 
 // link parent/children
   const nodesById = Object.fromEntries(gData.nodes.map((node) => [node.id, node]) );
 
-  gData.links.forEach((link) => {
-    nodesById[link.source].childLinks.push(link);
+  function linkWithParent(data){
+    data.links.forEach((link) => {
+      nodesById[link.source].childLinks.push(link);
+  
+      const a = data.nodes[link.source];
+      const b = data.nodes[link.target];
+      !a.neighbors && (a.neighbors = []);
+      !b.neighbors && (b.neighbors = []);
+      a.neighbors.push(b);
+      b.neighbors.push(a);
+  
+      !a.links && (a.links = []);
+      !b.links && (b.links = []);
+      a.links.push(link);
+      b.links.push(link);
+    });
+  }
+  linkWithParent(gData)
 
-    const a = gData.nodes[link.source];
-    const b = gData.nodes[link.target];
-    !a.neighbors && (a.neighbors = []);
-    !b.neighbors && (b.neighbors = []);
-    a.neighbors.push(b);
-    b.neighbors.push(a);
-
-    !a.links && (a.links = []);
-    !b.links && (b.links = []);
-    a.links.push(link);
-    b.links.push(link);
-  });
-
-
+  
 
 const highlightNodes = new Set();
 const highlightLinks = new Set();
@@ -121,11 +124,10 @@ Graph // actions
     // });
 
     elem.style.cursor = node && node.childLinks.length ? "pointer" : null; // show cursor pointer on node
-
     highlightNodes.clear();
-    highlightLinks.clear();
+    highlightLinks.clear();    
     
-    if (node) { //highlight links and nodes
+    if (node && node.links) { //highlight links and nodes
       highlightNodes.add(node);
       node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor));
       node.links.forEach((link) => highlightLinks.add(link));
@@ -147,7 +149,7 @@ Graph // actions
     }
 
     // folow the link
-    if (node.link) { if (confirm(`Go to: ${node.link}`)) window.location.href = node.link; }
+   // if (node.link) { if (confirm(`Go to: ${node.link}`)) window.location.href = node.link; }
 
     // if (confirm(`remove node`)) removeNode(node)
 
@@ -176,15 +178,9 @@ Graph
     const { nodes, links } = gData // Graph.graphData(); - only visible data
     let id = nodes.length;
     addNode(id, nodes, links)
-    console.log (id)
-  });
 
-// const { nodes, links } = Graph.graphData();
-// const id = nodes.length;
-// Graph.graphData({
-//   nodes: [...nodes, { id }],
-//   links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
-// });
+    console.log (nodes)
+  });
 
 // fit to canvas when engine stops
 //Graph.onEngineStop(() => Graph.zoomToFit(400));
@@ -217,13 +213,13 @@ function updateHighlight() {
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
 }
 
-function addNode(id, nodes, links, collapsed=false, group=1){
-  Object.bind(gData, {
-    nodes: [...nodes, { id, collapsed, group, childLinks: [] }],
-   // links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
-  });
+function addNode(id, nodes, links, collapsed=false, group=1, childLinks=[]){
+  Object.assign(gData, {
+    nodes: [...nodes, { id, collapsed, group, childLinks }],
+    links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
+  })  
+  Graph.graphData({ nodes, links }) 
 
-  Graph.graphData(gData)
 }
 
 function removeNode(node) {
