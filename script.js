@@ -38,31 +38,26 @@ const gData = {
 
   ]
 };
-()=>{}
 
-// link parent/children
+// get nodes ID
   const nodesById = Object.fromEntries(gData.nodes.map((node) => [node.id, node]) );
 
-  function linkWithParent(data){
-    data.links.forEach((link) => {
-      nodesById[link.source].childLinks.push(link);
-  
-      const a = data.nodes[link.source];
-      const b = data.nodes[link.target];
-      !a.neighbors && (a.neighbors = []);
-      !b.neighbors && (b.neighbors = []);
-      a.neighbors.push(b);
-      b.neighbors.push(a);
-  
-      !a.links && (a.links = []);
-      !b.links && (b.links = []);
-      a.links.push(link);
-      b.links.push(link);
-    });
-  }
-  linkWithParent(gData)
+// link parent/children
+  gData.links.forEach((link) => {
+    nodesById[link.source].childLinks.push(link);
 
-  
+    const a = gData.nodes[link.source];
+    const b = gData.nodes[link.target];
+    !a.neighbors && (a.neighbors = []);
+    !b.neighbors && (b.neighbors = []);
+    a.neighbors.push(b);
+    b.neighbors.push(a);
+
+    !a.links && (a.links = []);
+    !b.links && (b.links = []);
+    a.links.push(link);
+    b.links.push(link);
+  });
 
 const highlightNodes = new Set();
 const highlightLinks = new Set();
@@ -173,13 +168,17 @@ Graph // actions
 
 // Listen for click events on the canvas
 Graph
-  .onBackgroundRightClick(() => {
+  .onBackgroundRightClick((node) => {
     // Add a new node to the graph on click
-    const { nodes, links } = gData // Graph.graphData(); - only visible data
-    let id = nodes.length;
-    addNode(id, nodes, links)
+    //const { nodes, links } = Graph.graphData(); // only visible data
+    node.id= Graph.graphData().nodes.length;
+    addNode(node.id)
 
-    console.log (nodes)
+    node.fx = node.x;
+    node.fy = node.y;
+    node.fz = node.z;
+
+    console.log (node.id)
   });
 
 // fit to canvas when engine stops
@@ -197,9 +196,7 @@ function getPrunedTree (){
     if (node.collapsed) return;
     visibleLinks.push(...node.childLinks);
     node.childLinks
-      .map((link) =>
-        typeof link.target === "object" ? link.target : nodesById[link.target]
-      ) // get child node
+      .map((link) => typeof link.target === "object" ? link.target : nodesById[link.target] ) // get child node
       .forEach(traverseTree);
   })(); // IIFE
 
@@ -213,11 +210,20 @@ function updateHighlight() {
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
 }
 
-function addNode(id, nodes, links, collapsed=false, group=1, childLinks=[]){
-  Object.assign(gData, {
-    nodes: [...nodes, { id, collapsed, group, childLinks }],
-    links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
-  })  
+// function addNode(id, nodes, links, collapsed=false, group=1, childLinks=[]){
+//   Object.assign(gData, {
+//     nodes: [...nodes, { id, collapsed, group, childLinks }],
+//     links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
+//   })  
+//   Graph.graphData({ nodes, links }) 
+
+// }
+
+function addNode(id, collapsed=false, group=1, childLinks=[]){
+  let { nodes, links } = Graph.graphData();
+  nodes.push({ id, collapsed, group, childLinks })
+  links.push({ source: id, target: Math.round(Math.random() * (id-1)) })
+
   Graph.graphData({ nodes, links }) 
 
 }
