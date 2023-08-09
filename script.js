@@ -2,12 +2,12 @@ const $ = e => document.querySelector(e)
 const elem = document.getElementById("3d-graph");
 const rootId = 0;
 
-document.addEventListener('DOMContentLoaded', () => {  
+document.addEventListener('DOMContentLoaded', () => {
+  render2D()
   const checkbox = $('input[type="checkbox"]');
+  checkbox.checked = true;
   checkbox.addEventListener('change', () => checkbox.checked ? render2D() : render3D());
 })
-
-
 
 function render3D(){  
   const N = 5;
