@@ -14,7 +14,7 @@ function render2D(){
   elem.className = '';
   elem.classList.add('_2D');
   // Random tree
-  const N = 5;
+  const N = 50;
   const gData = {
     nodes: [...Array(N).keys()].map(i => ({ id: i, collapsed: i !== rootId, childLinks: [] })),
     links: [...Array(N).keys()]
@@ -67,7 +67,7 @@ function render2D(){
       // Add a new node to the graph on click
       //const { nodes, links } = Graph.graphData(); // only visible data
       node.id= Graph.graphData().nodes.length;
-      addNode(node.id)
+      if (confirm(`add new node`)) addNode(node.id)
 
       node.fx = node.x;
       node.fy = node.y;
@@ -75,11 +75,34 @@ function render2D(){
 
       // console.log (node.id)
     });
+
+    Graph.cooldownTime(Infinity)
+    .d3AlphaDecay(0)
+    .d3VelocityDecay(0)
+
+    // Deactivate existing forces
+    .d3Force('center', null)
+    .d3Force('charge', null)
+
+    // Add collision and bounding box forces
+    .d3Force('collide', d3.forceCollide(Graph.nodeRelSize()))
+    .d3Force('box', () => {
+      const SQUARE_HALF_SIDE = Graph.nodeRelSize() * N * 0.5;
+
+      gData.nodes.forEach(node => {
+        const x = node.x || 0, y = node.y || 0;
+
+        // bounce on box walls
+        if (Math.abs(x) > SQUARE_HALF_SIDE) { node.vx *= -1; }
+        if (Math.abs(y) > SQUARE_HALF_SIDE) { node.vy *= -1; }
+      });
+    })
+
     
   function addNode(id, collapsed=false, group=1, childLinks=[]){
     let { nodes, links } = Graph.graphData();
     nodes.push({ id, collapsed, group, childLinks })
-    links.push({ source: id, target: Math.round(Math.random() * (id-1)) })
+    //links.push({ source: id, target: Math.round(Math.random() * (id-1)) })
   
     Graph.graphData({ nodes, links }) 
   
@@ -200,25 +223,6 @@ Graph // actions
     updateHighlight();
   })
   .onNodeHover((node) => {
-    // no state change
-    // if ((!node && !highlightNodes.size) || (node && hoverNode === node)) return;
-
-    // gData.links.forEach((link) => {
-    //   nodesById[link.source].childLinks.push(link);
-  
-    //   const a = gData.nodes[link.source];
-    //   const b = gData.nodes[link.target];
-    //   !a.neighbors && (a.neighbors = []);
-    //   !b.neighbors && (b.neighbors = []);
-    //   a.neighbors.push(b);
-    //   b.neighbors.push(a);
-  
-    //   !a.links && (a.links = []);
-    //   !b.links && (b.links = []);
-    //   a.links.push(link);
-    //   b.links.push(link);
-    // });
-
     elem.style.cursor = node && node.childLinks.length ? "pointer" : null; // show cursor pointer on node
     highlightNodes.clear();
     highlightLinks.clear();    
@@ -232,11 +236,11 @@ Graph // actions
     hoverNode = node || null;
     updateHighlight();
   })
-  // .onNodeDragEnd(node => { // fix node position
-  //   node.fx = node.x;
-  //   node.fy = node.y;
-  //   node.fz = node.z;
-  // })
+  .onNodeDragEnd(node => { // fix node position
+    node.fx = node.x;
+    node.fy = node.y;
+    node.fz = node.z;
+  })
   .onNodeClick((node) => {
     // toggle collapse
     if (node.childLinks.length) {
