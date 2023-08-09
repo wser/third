@@ -175,19 +175,19 @@ Graph // actions
   });
 
 // Listen for click events on the canvas
-Graph
-  .onBackgroundRightClick((node) => {
-    // Add a new node to the graph on click
-    //const { nodes, links } = Graph.graphData(); // only visible data
-    node.id= Graph.graphData().nodes.length;
-    addNode(node.id)
+// Graph
+//   .onBackgroundRightClick((node) => {
+//     // Add a new node to the graph on click
+//     //const { nodes, links } = Graph.graphData(); // only visible data
+//     node.id= Graph.graphData().nodes.length;
+//     addNode(node.id)
 
-    node.fx = node.x;
-    node.fy = node.y;
-    node.fz = node.z;
+//     node.fx = node.x;
+//     node.fy = node.y;
+//     node.fz = node.z;
 
-    console.log (node.id)
-  });
+//     console.log (node.id)
+//   });
 
 // fit to canvas when engine stops
 //Graph.onEngineStop(() => Graph.zoomToFit(400));
