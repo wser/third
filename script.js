@@ -61,6 +61,39 @@ function render2D(){
     .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow');
 
 
+  // Listen for click events on the canvas
+  Graph
+    .onBackgroundRightClick((node) => {
+      // Add a new node to the graph on click
+      //const { nodes, links } = Graph.graphData(); // only visible data
+      node.id= Graph.graphData().nodes.length;
+      addNode(node.id)
+
+      node.fx = node.x;
+      node.fy = node.y;
+      node.fz = node.z;
+
+      // console.log (node.id)
+    });
+    
+  function addNode(id, collapsed=false, group=1, childLinks=[]){
+    let { nodes, links } = Graph.graphData();
+    nodes.push({ id, collapsed, group, childLinks })
+    links.push({ source: id, target: Math.round(Math.random() * (id-1)) })
+  
+    Graph.graphData({ nodes, links }) 
+  
+  }
+  
+  function removeNode(node) {
+    let { nodes, links } = Graph.graphData();
+    links = links.filter((l) => l.source !== node && l.target !== node); // Remove links attached to node
+    if (node.id != 0) nodes.splice(node.id, 1); // Remove node
+    nodes.forEach((n, idx) => {
+      n.id = idx;
+    }); // Reset node ids to array index
+    Graph.graphData({ nodes, links });
+  }
 }
 
 
@@ -234,21 +267,6 @@ Graph // actions
     // }
   });
 
-// Listen for click events on the canvas
-// Graph
-//   .onBackgroundRightClick((node) => {
-//     // Add a new node to the graph on click
-//     //const { nodes, links } = Graph.graphData(); // only visible data
-//     node.id= Graph.graphData().nodes.length;
-//     addNode(node.id)
-
-//     node.fx = node.x;
-//     node.fy = node.y;
-//     node.fz = node.z;
-
-//     console.log (node.id)
-//   });
-
 // fit to canvas when engine stops
 //Graph.onEngineStop(() => Graph.zoomToFit(400));
 () => {}
@@ -278,34 +296,6 @@ function updateHighlight() {
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
 }
 
-// function addNode(id, nodes, links, collapsed=false, group=1, childLinks=[]){
-//   Object.assign(gData, {
-//     nodes: [...nodes, { id, collapsed, group, childLinks }],
-//     links: [...links, { source: id, target: Math.round(Math.random() * (id-1)) }]
-//   })  
-//   Graph.graphData({ nodes, links }) 
-
-// }
-
-function addNode(id, collapsed=false, group=1, childLinks=[]){
-  let { nodes, links } = Graph.graphData();
-  nodes.push({ id, collapsed, group, childLinks })
-  links.push({ source: id, target: Math.round(Math.random() * (id-1)) })
-
-  Graph.graphData({ nodes, links }) 
-
-}
-
-function removeNode(node) {
-  let { nodes, links } = Graph.graphData();
-  links = links.filter((l) => l.source !== node && l.target !== node); // Remove links attached to node
-  if (node.id != 0) nodes.splice(node.id, 1); // Remove node
-  nodes.forEach((n, idx) => {
-    n.id = idx;
-  }); // Reset node ids to array index
-  Graph.graphData({ nodes, links });
-}
-
 // camera orbit
 //  let angle = 0;
 //   setInterval(() => {
@@ -328,12 +318,3 @@ Graph.scene().add(mesh);
 
 elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
 }
-
-
-
-
-
-
-
-
-

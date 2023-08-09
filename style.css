@@ -1,7 +1,7 @@
 body { margin: 0; } .clickable { cursor: unset !important }
 
 ._2D{
-  background-color: grey
+  background-color: floralwhite
 }
 
 .toggle {
@@ -19,6 +19,7 @@ body { margin: 0; } .clickable { cursor: unset !important }
   cursor: pointer;
   background-color: #707070;
   transition: background-color ease 0.3s;
+  z-index: 10;
 }
 
 .toggle:before {
