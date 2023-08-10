@@ -1,3 +1,22 @@
+/** TO DO
+
+- add d3 quadtree "Collision Detection with quadtree"
+- update gData array with newly created node
+- save link of collided node to childLinks of new node
+- persist all gData to local storage
+- first check for persistent data then create random data
+- display same data in all modes
+- create full path highlight of parent-children-grandchildren links
+- display node preferencs ini lil-gui
+- lil-gui update on edit mode to editi node preferences
+- display time dimension in 3D mode
+- visually indicate time on 3D graph
+- sort nodes by time - option in lil-gui
+
+*/
+
+
+
 const $ = e => document.querySelector(e)
 const elem = $("#graph");
 const checkbox = $('input[type="checkbox"]');
@@ -78,6 +97,7 @@ function render2D(){
     .nodeRelSize(8) // change size of nodes
     .graphData(getPrunedTree()) // connect visible children with parents
     .linkCurvature('curvature')
+    //
     //.linkCurvature(0.25) // bezier curve
     //.linkCurveRotation(0) // curve toration in radians
 
@@ -94,12 +114,14 @@ function render2D(){
       if (editMode) if (confirm(`remove node`)) removeNode(node.id)  // remove clicked node
     })
     .onNodeDrag(node => {     
-      if(!node.link) 
-        console.log (node.id)
-        gData.nodes.forEach(gnode => {
-          if (isCollide(node, gnode)) console.log (gnode.id)
-          
-        })     
+      if (!editMode) return; // if it's not in edit mode - exit
+      if (node.childLinks>0) return; // if node have links - exit
+
+      gData.nodes.forEach(gnode => { // check position of all nodes and compare for collision
+        if (doCollide(node.x, node.y, gnode.x, gnode.y)) {
+          console.log (gnode.id)      // if is collided return collided node id  
+        }
+      })         
     })
     .onNodeDragEnd(node => { // fix node position
       node.fx = node.x;
@@ -112,31 +134,17 @@ function render2D(){
       if (!editMode) return;
       // Add a new node to the graph on click
       const { nodes, links } = Graph2D.graphData(); // only visible data
-      node.id= Graph2D.graphData().nodes.length;
+      node.id= gData.nodes.length; // get total number of nodes in gData
       if (confirm(`add new node`)) addNode(node.id)
-      console.log (node.id)
+      //console.log (node.id)
     });
 
-  // function doCollide(x1, y1, x2, y2,) {
-  //   var xd = x1 - x2;
-  //   var yd = y1 - y2;
-  //   var r = Graph2D.nodeRelSize()*2
-  //   return (xd * xd + yd * yd <= r * r);
-  // }
-
-function isCollide(a, b) {
-  var r = Graph2D.nodeRelSize()*2
-  return !(
-      ((a.y + r) < (b.y)) ||
-      (a.y > (b.y + r)) ||
-      ((a.x + r) < b.x) ||
-      (a.x > (b.x + r))
-  );
-}
-
-
-    
-
+  function doCollide(x1, y1, x2, y2) {
+    var xd = x1 - x2;
+    var yd = y1 - y2;
+    var r = Graph2D.nodeRelSize()*2
+    return (xd * xd + yd * yd <= r * r);
+  }
    
   function addNode(id, collapsed=false, group=1, childLinks=[]){
     let { nodes, links } = Graph2D.graphData();
@@ -156,7 +164,6 @@ function isCollide(a, b) {
   }
   // resize graph to viewport
   elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph2D.width(el.offsetWidth));
-
 }
 
 
@@ -264,10 +271,12 @@ Graph3D // actions
   })
   .onNodeClick(node => {
     // toggle collapse
-    if (node.childLinks.length) {
-      node.collapsed = !node.collapsed; // toggle collapse state
-      Graph3D.graphData(getPrunedTree()); // reload data
-    }
+    if (!node.childLinks.length) return;
+    
+    node.collapsed = !node.collapsed; // toggle collapse state
+      
+    Graph3D.graphData(getPrunedTree()); // reload data
+    
 
     // folow the link
    // if (node.link) { if (confirm(`Go to: ${node.link}`)) window.location.href = node.link; }
