@@ -2,15 +2,6 @@ const $ = e => document.querySelector(e)
 const elem = $("#graph");
 const checkbox = $('input[type="checkbox"]');
 const rootId = 0;
-
-document.addEventListener('DOMContentLoaded', switchView)
-
-function switchView(){
-  render2D()  
-  checkbox.checked = true;
-  checkbox.addEventListener('change', () => checkbox.checked ? render2D() : render3D());
-}
-
 const myData = {
   nodes: [
     { id: 0, collapsed: false, group: 1, childLinks: [] },
@@ -29,6 +20,19 @@ const myData = {
 
   ]
 };
+
+document.addEventListener('DOMContentLoaded', setScene)
+
+function setScene(){
+  switchView()
+  lilGUI()
+}
+
+function switchView(){
+  render2D()  
+  checkbox.checked = true;
+  checkbox.addEventListener('change', () => checkbox.checked ? render2D() : render3D());
+}
 
 //  2D  /////////////////
 function render2D(){
@@ -90,17 +94,18 @@ function render2D(){
       node.fy = node.y;
       node.fz = node.z;
     })
+    
+  Graph // Listen for right click events on the canvas
+    .onBackgroundRightClick((node) => {
+      // Add a new node to the graph on click
+      const { nodes, links } = Graph.graphData(); // only visible data
+      node.id= Graph.graphData().nodes.length;
+      if (confirm(`add new node`)) addNode(node.id)
+      console.log (node.id)
+    });
 
 const forLater = () => {
-    // Listen for click events on the canvas
-  // Graph
-  //   .onBackgroundRightClick((node) => {
-  //     // Add a new node to the graph on click
-  //     //const { nodes, links } = Graph.graphData(); // only visible data
-  //     //node.id= Graph.graphData().nodes.length;
-  //     //if (confirm(`add new node`)) addNode(node.id)
-  //     // console.log (node.id)
-  //   });
+
 
 
   // Graph //d3 functions
@@ -149,7 +154,6 @@ const forLater = () => {
 }
 
 
-
 //  3D  /////////////////
 function render3D(){  
   elem.className = '';
@@ -174,26 +178,6 @@ function render3D(){
 //       source: Math.round(Math.random() * (id - 1)),
 //       target: id,
 //     })),
-// };
-
-// Custom data
-// const gData = {
-//   nodes: [
-//     { id: 0, collapsed: false, group: 1, childLinks: [] },
-//     { id: 1, collapsed: true, group: 1, childLinks: [] },
-//     { id: 2, collapsed: true, group: 2, link:"https://www.google.com/", childLinks: [] },
-//     { id: 3, collapsed: true, group: 2, childLinks: [] },
-//     { id: 4, collapsed: true, group: 2, childLinks: [] },
-
-//   ],
-//   links: [
-//     { source: 0, target: 1},
-//     { source: 1, target: 2},
-//     { source: 1, target: 3},
-//     { source: 3, target: 4},
-//     // { source: 2, target: 4},
-
-//   ]
 // };
 
 // get nodes ID
@@ -352,4 +336,58 @@ mesh.rotation.set(0.5 * Math.PI, 0, 0);
 Graph.scene().add(mesh);
 // resize to viewport
 elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
+}
+
+
+//  CTRL ////////////////
+function lilGUI(){
+  const gui = new lil.GUI();
+  gui.add( document, 'title' );
+  const myObject = {
+    myBoolean: true,
+    //myFunction: function() { ... },
+    myString: 'lil-gui',
+    myNumber: 1,
+    string: 'Colors'
+  };
+  
+  gui.add( myObject, 'myBoolean' );  // Checkbox
+  //gui.add( myObject, 'myFunction' ); // Button
+  gui.add( myObject, 'myString' );   // Text Field
+  gui.add( myObject, 'myNumber' );   // Number Field
+  
+  // Add sliders to number fields by passing min and max
+  gui.add( myObject, 'myNumber', 0, 1 );
+  gui.add( myObject, 'myNumber', 0, 100, 2 ); // snap to even numbers
+  
+  // Create dropdowns by passing an array or object of named values
+  gui.add( myObject, 'myNumber', [ 0, 1, 2 ] );
+  gui.add( myObject, 'myNumber', { Label1: 0, Label2: 1, Label3: 2 } );
+  
+  // Chainable methods
+  // gui.add( myObject, 'myProperty' )
+  //   .name( 'Custom Name' )
+  //   .onChange( value => {
+  //     console.log( value );
+  //   } );
+  
+  // Create color pickers for multiple color formats
+  const colorFormats = {
+    string: '#ffffff',
+    int: 0xffffff,
+    object: { r: 1, g: 1, b: 1 },
+    array: [ 1, 1, 1 ]
+  };
+  
+  gui.addColor( colorFormats, 'string' );
+
+  var params = {
+    switch: false
+};
+
+gui.add(params, "switch").name("light switch");
+
+
+
+gui.close();
 }
