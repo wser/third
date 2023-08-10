@@ -21,6 +21,8 @@ const myData = {
   ]
 };
 
+let editMode = false;
+
 document.addEventListener('DOMContentLoaded', setScene)
 
 function setScene(){
@@ -52,7 +54,7 @@ function render2D(){
   // link parent/children
   const nodesById = Object.fromEntries(gData.nodes.map(node => [node.id, node]));
   gData.links.forEach(link => {
-    link = {...link, curvature: Math.random() * 1} // add random link curvature
+    link = {...link, curvature: 0.5}//Math.random().toFixed(2)} // add random link curvature
     nodesById[link.source].childLinks.push(link)
   })
 
@@ -75,6 +77,8 @@ function render2D(){
   const Graph = ForceGraph()(elem)
     .graphData(getPrunedTree())
     .linkCurvature('curvature')
+    //.linkCurvature(0.25) // bezier curve
+    //.linkCurveRotation(0) // curve toration in radians
 
   Graph // actions on node
     .onNodeHover(node => elem.style.cursor = node && node.childLinks.length ? 'pointer' : null)
@@ -84,7 +88,7 @@ function render2D(){
         Graph.graphData(getPrunedTree());
       }
 
-      // if (confirm(`remove node`)) removeNode(node.id)  // remove clicked node
+      if (editMode) if (confirm(`remove node`)) removeNode(node.id)  // remove clicked node
     })
     .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow')
     .onNodeDragEnd(node => { // fix node position
@@ -95,6 +99,7 @@ function render2D(){
     
   Graph // Listen for right click events on the canvas
     .onBackgroundRightClick((node) => {
+      if (!editMode) return
       // Add a new node to the graph on click
       const { nodes, links } = Graph.graphData(); // only visible data
       node.id= Graph.graphData().nodes.length;
@@ -339,16 +344,23 @@ elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth)
 
 //  CTRL ////////////////
 function lilGUI(){
-  const gui = new lil.GUI();
+  const gui = new lil.GUI({ title: "Settings" } );
+
   
-  const g_obj ={ title: 'Third' }
-  gui.add( g_obj, 'title' );
-
-
+  const obj = { 
+    '2D / 3D': false, 
+    'Edit mode': false
+  };
+  
   const perspective = gui.addFolder( 'Perspective' );
-  const p_obj = { '2D / 3D': false, };
   perspective
-    .add( p_obj, '2D / 3D' ).onChange( bool => bool ? render3D() : render2D() )
+    .add( obj, '2D / 3D' ).onChange( bool => bool ? render3D() : render2D() )
+  perspective.close()
+
+  const preferences = gui.addFolder( 'Preferences' );
+  preferences
+    .add( obj, 'Edit mode' ).onChange( bool => editMode = bool )
+  preferences.close()
 
  
   // gui.add( myObject, 'myBoolean' );  // Checkbox
