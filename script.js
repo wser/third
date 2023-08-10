@@ -24,14 +24,8 @@ const myData = {
 document.addEventListener('DOMContentLoaded', setScene)
 
 function setScene(){
-  switchView()
+  render2D()
   lilGUI()
-}
-
-function switchView(){
-  render2D()  
-  checkbox.checked = true;
-  checkbox.addEventListener('change', () => checkbox.checked ? render2D() : render3D());
 }
 
 //  2D  /////////////////
@@ -342,52 +336,54 @@ elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth)
 //  CTRL ////////////////
 function lilGUI(){
   const gui = new lil.GUI();
-  gui.add( document, 'title' );
-  const myObject = {
-    myBoolean: true,
-    //myFunction: function() { ... },
-    myString: 'lil-gui',
-    myNumber: 1,
-    string: 'Colors'
+  
+  const g_obj ={
+     title: 'Third'
+  }
+  gui.add( g_obj, 'title' );
+
+
+  const folder = gui.addFolder( 'Perspective' );
+  const p_obj = {
+    '2D / 3D': false,
   };
-  
-  gui.add( myObject, 'myBoolean' );  // Checkbox
-  //gui.add( myObject, 'myFunction' ); // Button
-  gui.add( myObject, 'myString' );   // Text Field
-  gui.add( myObject, 'myNumber' );   // Number Field
-  
-  // Add sliders to number fields by passing min and max
-  gui.add( myObject, 'myNumber', 0, 1 );
-  gui.add( myObject, 'myNumber', 0, 100, 2 ); // snap to even numbers
-  
-  // Create dropdowns by passing an array or object of named values
-  gui.add( myObject, 'myNumber', [ 0, 1, 2 ] );
-  gui.add( myObject, 'myNumber', { Label1: 0, Label2: 1, Label3: 2 } );
-  
-  // Chainable methods
-  // gui.add( myObject, 'myProperty' )
-  //   .name( 'Custom Name' )
-  //   .onChange( value => {
-  //     console.log( value );
-  //   } );
-  
-  // Create color pickers for multiple color formats
-  const colorFormats = {
-    string: '#ffffff',
-    int: 0xffffff,
-    object: { r: 1, g: 1, b: 1 },
-    array: [ 1, 1, 1 ]
-  };
-  
-  gui.addColor( colorFormats, 'string' );
-
-  var params = {
-    switch: false
-};
-
-gui.add(params, "switch").name("light switch");
+  folder.add( p_obj, '2D / 3D' ).onChange( bool => bool ? render3D() : render2D() )
 
 
 
-gui.close();
+  
+  // gui.add( myObject, 'myBoolean' );  // Checkbox
+  // gui.add( myObject, 'myFunction' ); // Button
+  // gui.add( myObject, 'myString' );   // Text Field
+  // gui.add( myObject, 'myNumber' );   // Number Field
+  
+  // // Add sliders to number fields by passing min and max
+  // gui.add( myObject, 'myNumber', 0, 1 );
+  // gui.add( myObject, 'myNumber', 0, 100, 2 ); // snap to even numbers
+  
+  // // Create dropdowns by passing an array or object of named values
+  // gui.add( myObject, 'myNumber', [ 0, 1, 2 ] );
+  
+  // // Chainable methods
+  // // gui.add( myObject, 'myProperty' )
+  // //   .name( 'Custom Name' )
+  // //   .onChange( value => {
+  // //     console.log( value );
+  // //   } );
+  
+  // // Create color pickers for multiple color formats
+  // const colorFormats = {
+  //   string: '#ffffff',
+  //   int: 0xffffff,
+  //   object: { r: 1, g: 1, b: 1 },
+  //   array: [ 1, 1, 1 ]
+  // };
+  
+  // gui.addColor( colorFormats, 'string' );
+
+
+
+
+//gui.close();
+
 }
