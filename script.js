@@ -74,85 +74,86 @@ function render2D(){
     return { nodes: visibleNodes, links: visibleLinks };
   };
 
-  const Graph = ForceGraph()(elem)
-    .graphData(getPrunedTree())
+  const Graph2D = ForceGraph()(elem)
+    .nodeRelSize(8) // change size of nodes
+    .graphData(getPrunedTree()) // connect visible children with parents
     .linkCurvature('curvature')
     //.linkCurvature(0.25) // bezier curve
     //.linkCurveRotation(0) // curve toration in radians
 
-  Graph // actions on node
+  Graph2D // actions on node
+    .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow')
     .onNodeHover(node => elem.style.cursor = node && node.childLinks.length ? 'pointer' : null)
     .onNodeClick(node => {
       if (node.childLinks.length) {
         node.collapsed = !node.collapsed; // toggle collapse state
-        Graph.graphData(getPrunedTree());
-      }
-
+        Graph2D.graphData(getPrunedTree());
+      }      
+    })
+    .onNodeRightClick(node => {
       if (editMode) if (confirm(`remove node`)) removeNode(node.id)  // remove clicked node
     })
-    .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow')
+    .onNodeDrag(node => {
+      console.log (node.id)
+      gData.nodes.forEach(node => {
+        //if (node.x != undefined) console.log(node.id+":", node.x, node.y)
+
+        let n1 = node.id;
+        let n2 = node.id+1;
+
+        collide(n1, n2)
+
+      })
+
+    })
     .onNodeDragEnd(node => { // fix node position
       node.fx = node.x;
       node.fy = node.y;
       node.fz = node.z;
     })
     
-  Graph // Listen for right click events on the canvas
+  Graph2D // Listen for right click events on the canvas
     .onBackgroundRightClick((node) => {
-      if (!editMode) return
+      if (!editMode) return;
       // Add a new node to the graph on click
-      const { nodes, links } = Graph.graphData(); // only visible data
-      node.id= Graph.graphData().nodes.length;
+      const { nodes, links } = Graph2D.graphData(); // only visible data
+      node.id= Graph2D.graphData().nodes.length;
       if (confirm(`add new node`)) addNode(node.id)
       console.log (node.id)
     });
 
-const forLater = () => {
+  function collide(n1, n2) {
+    const dx = n1.x - n2.x;
+    const dy = n1.y - n2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+  
+    const colliding = distance < n1.radius + n2.radius;
+    // this.color = colliding ? "green" : "blue";
+    console.log(colliding)
+  }
 
 
+    
 
-  // Graph //d3 functions
-  //   .cooldownTime(Infinity)
-  //   .d3AlphaDecay(0)
-  //   .d3VelocityDecay(0)
-
-  //   // Deactivate existing forces
-  //   .d3Force('center', null)
-  //   .d3Force('charge', null)
-
-  //   // Add collision and bounding box forces
-  //   .d3Force('collide', d3.forceCollide(Graph.nodeRelSize()))
-  //   .d3Force('box', () => {
-  //     const SQUARE_HALF_SIDE = Graph.nodeRelSize() * N * 0.5;
-
-  //     gData.nodes.forEach(node => {
-  //       const x = node.x || 0, y = node.y || 0;
-
-  //       // bounce on box walls
-  //       if (Math.abs(x) > SQUARE_HALF_SIDE) { node.vx *= -1; }
-  //       if (Math.abs(y) > SQUARE_HALF_SIDE) { node.vy *= -1; }
-  //     });
-  //   })
-}
    
   function addNode(id, collapsed=false, group=1, childLinks=[]){
-    let { nodes, links } = Graph.graphData();
+    let { nodes, links } = Graph2D.graphData();
     nodes.push({ id, collapsed, group, childLinks })
     //links.push({ source: id, target: Math.round(Math.random() * (id-1)) })
   
-    Graph.graphData({ nodes, links }) 
+    Graph2D.graphData({ nodes, links }) 
   
   }
 
   function removeNode(node) {
-    let { nodes, links } = Graph.graphData();
+    let { nodes, links } = Graph2D.graphData();
     links = links.filter(l => l.source !== node && l.target !== node); // Remove links attached to node
     if (node.id != 0)nodes.splice(node.id, 1); // Remove node
     nodes.forEach((n, idx) => { n.id = idx; }); // Reset node ids to array index
-    Graph.graphData({ nodes, links });
+    Graph2D.graphData({ nodes, links });
   }
   // resize graph to viewport
-  elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
+  elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph2D.width(el.offsetWidth));
 
 }
 
@@ -206,19 +207,19 @@ gData.links.forEach((link) => {
   const highlightLinks = new Set();
   let hoverNode = null;
 // define main object and data
-let Graph = ForceGraph3D()(elem)
+let Graph3D = ForceGraph3D()(elem)
   //.height(window.innerHeight - 60)
   .backgroundColor("grey")
   .graphData(getPrunedTree()) // data to work with
 
 
-Graph // nodes  
+Graph3D // nodes  
   //.nodeColor(node => highlightNodes.has(node) ? node === hoverNode ? 'rgb(255,0,0,1)' : 'rgba(255,160,0,0.8)' : 'rgba(0,255,255,0.6)')
   .nodeAutoColorBy("group")
   .nodeColor((node) => !node.childLinks.length ? "green" : node.collapsed ? "red" : "yellow")
   .nodeLabel("id")
   
-Graph //links
+Graph3D //links
   .linkCurvature(0.25) // bezier curve
   .linkCurveRotation(0) // curve toration in radians
   .linkWidth((link) => (highlightLinks.has(link) ? 1 : 1))
@@ -227,7 +228,7 @@ Graph //links
   .linkOpacity(0.12)
   //.linkAutoColorBy(d => gData.nodes[d.source].group)
 
-Graph // actions  
+Graph3D // actions  
   .onLinkHover(link => {
     highlightNodes.clear();
     highlightLinks.clear();
@@ -263,7 +264,7 @@ Graph // actions
     // toggle collapse
     if (node.childLinks.length) {
       node.collapsed = !node.collapsed; // toggle collapse state
-      Graph.graphData(getPrunedTree()); // reload data
+      Graph3D.graphData(getPrunedTree()); // reload data
     }
 
     // folow the link
@@ -281,7 +282,7 @@ Graph // actions
     //     ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
     //     : { x: 0, y: 0, z: distance }; // special case if node is in (0,0,0)
 
-    //   Graph.cameraPosition(
+    //   Graph3D.cameraPosition(
     //     newPos, // new position
     //     node, // lookAt ({ x, y, z })
     //     3000  // ms transition duration
@@ -290,7 +291,7 @@ Graph // actions
   });
 
 // fit to canvas when engine stops
-//Graph.onEngineStop(() => Graph.zoomToFit(400));
+//Graph3D.onEngineStop(() => Graph3D.zoomToFit(400));
 () => {}
 
 // Functions
@@ -313,15 +314,15 @@ function getPrunedTree (){
 
 function updateHighlight() {
   // trigger update of highlighted objects in scene
-  Graph.nodeColor(Graph.nodeColor())
-    .linkWidth(Graph.linkWidth())
-    .linkDirectionalParticles(Graph.linkDirectionalParticles());
+  Graph3D.nodeColor(Graph3D.nodeColor())
+    .linkWidth(Graph3D.linkWidth())
+    .linkDirectionalParticles(Graph3D.linkDirectionalParticles());
 }
 
 // camera orbit
 //  let angle = 0;
 //   setInterval(() => {
-//     Graph.cameraPosition({
+//     Graph3D.cameraPosition({
 //       x: distance * Math.sin(angle),
 //       z: distance * Math.cos(angle)
 //     });
@@ -336,9 +337,9 @@ const mesh = new THREE.Mesh(planeGeometry, planeMaterial);
 mesh.position.set(-100, -200, -100);
 mesh.rotation.set(0.5 * Math.PI, 0, 0);
 
-Graph.scene().add(mesh);
+Graph3D.scene().add(mesh);
 // resize to viewport
-elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
+elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph3D.width(el.offsetWidth));
 }
 
 
