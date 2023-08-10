@@ -143,6 +143,8 @@ const forLater = () => {
     nodes.forEach((n, idx) => { n.id = idx; }); // Reset node ids to array index
     Graph.graphData({ nodes, links });
   }
+  // resize graph to viewport
+  elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
 
 }
 
@@ -154,9 +156,9 @@ function render3D(){
   elem.classList.add('_3D');
   const gData = structuredClone(myData) //JSON.parse(JSON.stringify(myData)) // deep clone
 
-  const N = 5;
-  const GROUPS = 12;
-  const distance = 150;
+  // const N = 5;
+  // const GROUPS = 12;
+  // const distance = 150;
 
 // Random tree
 // const gData = {
@@ -221,7 +223,7 @@ let Graph = ForceGraph3D()(elem)
   //.height(window.innerHeight - 60)
   .backgroundColor("grey")
   .graphData(getPrunedTree()) // data to work with
-  //.cooldownTicks(200) // cool down time to fit to canvas size
+
 
 Graph // nodes  
   //.nodeColor(node => highlightNodes.has(node) ? node === hoverNode ? 'rgb(255,0,0,1)' : 'rgba(255,160,0,0.8)' : 'rgba(0,255,255,0.6)')
@@ -348,6 +350,6 @@ mesh.position.set(-100, -200, -100);
 mesh.rotation.set(0.5 * Math.PI, 0, 0);
 
 Graph.scene().add(mesh);
-
+// resize to viewport
 elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth));
 }
