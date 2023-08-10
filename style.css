@@ -1,5 +1,10 @@
-body { margin: 0; } .clickable { cursor: unset !important }
-
-._2D{
-  background-color: floralwhite
+:root {
+  --lil-width: 150px;
 }
+
+body { margin: 0; } 
+.clickable { cursor: unset !important; }
+._2D{ background-color: floralwhite; }
+.lil-gui.root{ width: var(--lil-width); }
+.lil-gui .children .controller .name{padding-left: 10%;width: calc(var(--lil-width)/2);}
+.lil-gui .children .controller .widget{justify-content: center;}
