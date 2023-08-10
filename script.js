@@ -51,7 +51,10 @@ function render2D(){
   const gData = structuredClone(myData) //JSON.parse(JSON.stringify(myData)) // deep clone
   // link parent/children
   const nodesById = Object.fromEntries(gData.nodes.map(node => [node.id, node]));
-  gData.links.forEach(link => nodesById[link.source].childLinks.push(link))
+  gData.links.forEach(link => {
+    link = {...link, curvature: Math.random() * 1} // add random link curvature
+    nodesById[link.source].childLinks.push(link)
+  })
 
   const getPrunedTree = () => {
     const visibleNodes = [];
@@ -71,6 +74,7 @@ function render2D(){
 
   const Graph = ForceGraph()(elem)
     .graphData(getPrunedTree())
+    .linkCurvature('curvature')
 
   Graph // actions on node
     .onNodeHover(node => elem.style.cursor = node && node.childLinks.length ? 'pointer' : null)
@@ -337,21 +341,16 @@ elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph.width(el.offsetWidth)
 function lilGUI(){
   const gui = new lil.GUI();
   
-  const g_obj ={
-     title: 'Third'
-  }
+  const g_obj ={ title: 'Third' }
   gui.add( g_obj, 'title' );
 
 
-  const folder = gui.addFolder( 'Perspective' );
-  const p_obj = {
-    '2D / 3D': false,
-  };
-  folder.add( p_obj, '2D / 3D' ).onChange( bool => bool ? render3D() : render2D() )
+  const perspective = gui.addFolder( 'Perspective' );
+  const p_obj = { '2D / 3D': false, };
+  perspective
+    .add( p_obj, '2D / 3D' ).onChange( bool => bool ? render3D() : render2D() )
 
-
-
-  
+ 
   // gui.add( myObject, 'myBoolean' );  // Checkbox
   // gui.add( myObject, 'myFunction' ); // Button
   // gui.add( myObject, 'myString' );   // Text Field
@@ -380,10 +379,5 @@ function lilGUI(){
   // };
   
   // gui.addColor( colorFormats, 'string' );
-
-
-
-
-//gui.close();
-
+  gui.close();
 }
