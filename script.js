@@ -1,35 +1,59 @@
 const $ = e => document.querySelector(e)
 const elem = $("#graph");
+const checkbox = $('input[type="checkbox"]');
 const rootId = 0;
 
-document.addEventListener('DOMContentLoaded', () => {
-  render2D()
-  const checkbox = $('input[type="checkbox"]');
+document.addEventListener('DOMContentLoaded', switchView)
+
+function switchView(){
+  render2D()  
   checkbox.checked = true;
   checkbox.addEventListener('change', () => checkbox.checked ? render2D() : render3D());
-})
+}
+
+const myData = {
+  nodes: [
+    { id: 0, collapsed: false, group: 1, childLinks: [] },
+    { id: 1, collapsed: true, group: 1, childLinks: [] },
+    { id: 2, collapsed: true, group: 2, link:"https://www.google.com/", childLinks: [] },
+    { id: 3, collapsed: true, group: 2, childLinks: [] },
+    { id: 4, collapsed: true, group: 2, childLinks: [] },
+
+  ],
+  links: [
+    { source: 0, target: 1},
+    { source: 1, target: 2},
+    { source: 1, target: 3},
+    { source: 3, target: 4},
+    // { source: 2, target: 4},
+
+  ]
+};
 
 //  2D  /////////////////
 function render2D(){
   elem.className = '';
   elem.classList.add('_2D');
   // Random tree
-  const N = 50;
-  const gData = {
-    nodes: [...Array(N).keys()].map(i => ({ id: i, collapsed: i !== rootId, childLinks: [] })),
-    links: [...Array(N).keys()]
-      .filter(id => id)
-      .map(id => ({
-        source: Math.round(Math.random() * (id - 1)),
-        target: id
-      }))
-  };
+  // const N = 50;
+  // const gData = {
+  //   nodes: [...Array(N).keys()].map(i => ({ 
+  //     id: i, 
+  //     collapsed: i !== rootId, 
+  //     childLinks: [] 
+  //   })),
+  //   links: [...Array(N).keys()]
+  //     .filter(id => id)
+  //     .map(id => ({
+  //       source: Math.round(Math.random() * (id - 1)),
+  //       target: id
+  //     }))
+  // };
 
+  const gData = structuredClone(myData) //JSON.parse(JSON.stringify(myData)) // deep clone
   // link parent/children
   const nodesById = Object.fromEntries(gData.nodes.map(node => [node.id, node]));
-  gData.links.forEach(link => {
-    nodesById[link.source].childLinks.push(link);
-  });
+  gData.links.forEach(link => nodesById[link.source].childLinks.push(link))
 
   const getPrunedTree = () => {
     const visibleNodes = [];
@@ -49,6 +73,8 @@ function render2D(){
 
   const Graph = ForceGraph()(elem)
     .graphData(getPrunedTree())
+
+  Graph // actions on node
     .onNodeHover(node => elem.style.cursor = node && node.childLinks.length ? 'pointer' : null)
     .onNodeClick(node => {
       if (node.childLinks.length) {
@@ -56,52 +82,51 @@ function render2D(){
         Graph.graphData(getPrunedTree());
       }
 
-      if (confirm(`remove node`)) removeNode(node.id)
+      // if (confirm(`remove node`)) removeNode(node.id)  // remove clicked node
     })
-
-    // .linkDirectionalParticles(1)
-    // .linkDirectionalParticleWidth(2.5)
-    .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow');
-
-
-  // Listen for click events on the canvas
-  Graph
-    .onBackgroundRightClick((node) => {
-      // Add a new node to the graph on click
-      //const { nodes, links } = Graph.graphData(); // only visible data
-      node.id= Graph.graphData().nodes.length;
-      if (confirm(`add new node`)) addNode(node.id)
-
+    .nodeColor(node => !node.childLinks.length ? 'green' : node.collapsed ? 'red' : 'yellow')
+    .onNodeDragEnd(node => { // fix node position
       node.fx = node.x;
       node.fy = node.y;
       node.fz = node.z;
-
-      // console.log (node.id)
-    });
-
-    Graph.cooldownTime(Infinity)
-    .d3AlphaDecay(0)
-    .d3VelocityDecay(0)
-
-    // Deactivate existing forces
-    .d3Force('center', null)
-    .d3Force('charge', null)
-
-    // Add collision and bounding box forces
-    .d3Force('collide', d3.forceCollide(Graph.nodeRelSize()))
-    .d3Force('box', () => {
-      const SQUARE_HALF_SIDE = Graph.nodeRelSize() * N * 0.5;
-
-      gData.nodes.forEach(node => {
-        const x = node.x || 0, y = node.y || 0;
-
-        // bounce on box walls
-        if (Math.abs(x) > SQUARE_HALF_SIDE) { node.vx *= -1; }
-        if (Math.abs(y) > SQUARE_HALF_SIDE) { node.vy *= -1; }
-      });
     })
 
-    
+const forLater = () => {
+    // Listen for click events on the canvas
+  // Graph
+  //   .onBackgroundRightClick((node) => {
+  //     // Add a new node to the graph on click
+  //     //const { nodes, links } = Graph.graphData(); // only visible data
+  //     //node.id= Graph.graphData().nodes.length;
+  //     //if (confirm(`add new node`)) addNode(node.id)
+  //     // console.log (node.id)
+  //   });
+
+
+  // Graph //d3 functions
+  //   .cooldownTime(Infinity)
+  //   .d3AlphaDecay(0)
+  //   .d3VelocityDecay(0)
+
+  //   // Deactivate existing forces
+  //   .d3Force('center', null)
+  //   .d3Force('charge', null)
+
+  //   // Add collision and bounding box forces
+  //   .d3Force('collide', d3.forceCollide(Graph.nodeRelSize()))
+  //   .d3Force('box', () => {
+  //     const SQUARE_HALF_SIDE = Graph.nodeRelSize() * N * 0.5;
+
+  //     gData.nodes.forEach(node => {
+  //       const x = node.x || 0, y = node.y || 0;
+
+  //       // bounce on box walls
+  //       if (Math.abs(x) > SQUARE_HALF_SIDE) { node.vx *= -1; }
+  //       if (Math.abs(y) > SQUARE_HALF_SIDE) { node.vy *= -1; }
+  //     });
+  //   })
+}
+   
   function addNode(id, collapsed=false, group=1, childLinks=[]){
     let { nodes, links } = Graph.graphData();
     nodes.push({ id, collapsed, group, childLinks })
@@ -127,6 +152,8 @@ function render2D(){
 function render3D(){  
   elem.className = '';
   elem.classList.add('_3D');
+  const gData = structuredClone(myData) //JSON.parse(JSON.stringify(myData)) // deep clone
+
   const N = 5;
   const GROUPS = 12;
   const distance = 150;
@@ -148,24 +175,24 @@ function render3D(){
 // };
 
 // Custom data
-const gData = {
-  nodes: [
-    { id: 0, collapsed: false, group: 1, childLinks: [] },
-    { id: 1, collapsed: true, group: 1, childLinks: [] },
-    { id: 2, collapsed: true, group: 2, link:"https://www.google.com/", childLinks: [] },
-    { id: 3, collapsed: true, group: 2, childLinks: [] },
-    { id: 4, collapsed: true, group: 2, childLinks: [] },
+// const gData = {
+//   nodes: [
+//     { id: 0, collapsed: false, group: 1, childLinks: [] },
+//     { id: 1, collapsed: true, group: 1, childLinks: [] },
+//     { id: 2, collapsed: true, group: 2, link:"https://www.google.com/", childLinks: [] },
+//     { id: 3, collapsed: true, group: 2, childLinks: [] },
+//     { id: 4, collapsed: true, group: 2, childLinks: [] },
 
-  ],
-  links: [
-    { source: 0, target: 1},
-    { source: 1, target: 2},
-    { source: 1, target: 3},
-    { source: 3, target: 4},
-    // { source: 2, target: 4},
+//   ],
+//   links: [
+//     { source: 0, target: 1},
+//     { source: 1, target: 2},
+//     { source: 1, target: 3},
+//     { source: 3, target: 4},
+//     // { source: 2, target: 4},
 
-  ]
-};
+//   ]
+// };
 
 // get nodes ID
 const nodesById = Object.fromEntries(gData.nodes.map((node) => [node.id, node]) );
@@ -212,7 +239,7 @@ Graph //links
   //.linkAutoColorBy(d => gData.nodes[d.source].group)
 
 Graph // actions  
-  .onLinkHover((link) => {
+  .onLinkHover(link => {
     highlightNodes.clear();
     highlightLinks.clear();
 
@@ -224,7 +251,7 @@ Graph // actions
 
     updateHighlight();
   })
-  .onNodeHover((node) => {
+  .onNodeHover(node => {
     elem.style.cursor = node && node.childLinks.length ? "pointer" : null; // show cursor pointer on node
     highlightNodes.clear();
     highlightLinks.clear();    
@@ -243,7 +270,7 @@ Graph // actions
     node.fy = node.y;
     node.fz = node.z;
   })
-  .onNodeClick((node) => {
+  .onNodeClick(node => {
     // toggle collapse
     if (node.childLinks.length) {
       node.collapsed = !node.collapsed; // toggle collapse state
