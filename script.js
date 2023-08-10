@@ -93,18 +93,13 @@ function render2D(){
     .onNodeRightClick(node => {
       if (editMode) if (confirm(`remove node`)) removeNode(node.id)  // remove clicked node
     })
-    .onNodeDrag(node => {
-      console.log (node.id)
-      gData.nodes.forEach(node => {
-        //if (node.x != undefined) console.log(node.id+":", node.x, node.y)
-
-        let n1 = node.id;
-        let n2 = node.id+1;
-
-        collide(n1, n2)
-
-      })
-
+    .onNodeDrag(node => {     
+      if(!node.link) 
+        console.log (node.id)
+        gData.nodes.forEach(gnode => {
+          if (isCollide(node, gnode)) console.log (gnode.id)
+          
+        })     
     })
     .onNodeDragEnd(node => { // fix node position
       node.fx = node.x;
@@ -122,15 +117,22 @@ function render2D(){
       console.log (node.id)
     });
 
-  function collide(n1, n2) {
-    const dx = n1.x - n2.x;
-    const dy = n1.y - n2.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-  
-    const colliding = distance < n1.radius + n2.radius;
-    // this.color = colliding ? "green" : "blue";
-    console.log(colliding)
-  }
+  // function doCollide(x1, y1, x2, y2,) {
+  //   var xd = x1 - x2;
+  //   var yd = y1 - y2;
+  //   var r = Graph2D.nodeRelSize()*2
+  //   return (xd * xd + yd * yd <= r * r);
+  // }
+
+function isCollide(a, b) {
+  var r = Graph2D.nodeRelSize()*2
+  return !(
+      ((a.y + r) < (b.y)) ||
+      (a.y > (b.y + r)) ||
+      ((a.x + r) < b.x) ||
+      (a.x > (b.x + r))
+  );
+}
 
 
     
@@ -346,7 +348,6 @@ elementResizeDetectorMaker().listenTo(elem, (el) =>  Graph3D.width(el.offsetWidt
 //  CTRL ////////////////
 function lilGUI(){
   const gui = new lil.GUI({ title: "Settings" } );
-
   
   const obj = { 
     '2D / 3D': false, 
